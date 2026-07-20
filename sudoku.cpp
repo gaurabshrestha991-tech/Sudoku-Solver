@@ -18,26 +18,36 @@ int board[SIZE][SIZE] =
     {0,0,0,0,8,0,0,7,9}
 };
 
-int orginal[SIZE][SIZE];
+int original[SIZE][SIZE];
+int initialBoard[SIZE][SIZE];
 
 void copyOriginal()
 {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            orginal[i][j] = board[i][j];
+            original[i][j] = board[i][j];
+            initialBoard[i][j] = board[i][j];
         }
     }
+}
+
+void restartGame()
+{
+    for(int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            board[i][j] = initialBoard[i][j];
+        }
+    }
+    cout << "\nGame restarted successfully!\n";
 }
 
 void printBoard() 
 {
     cout << "\n";
-
     for(int i = 0; i < SIZE; i++) {
         if (i%3 == 0) {
             cout << "-----------------------------\n";
         }
-
         for(int j = 0; j < SIZE; j++) {
             if(j%3 == 0)
                 cout << " | ";
@@ -47,13 +57,10 @@ void printBoard()
             else 
                 cout << board[i][j]<< " ";
         }
-
         cout << "|\n";
     }
-
     cout << "---------------------------------\n";
 }
-
 
 bool usedInRow(int row, int num) 
 {
@@ -65,7 +72,6 @@ bool usedInRow(int row, int num)
 }
 
 bool usedInCol(int col, int num) {
-
     for (int row = 0; row < SIZE; row++) {
         if (board[row][col]==num)
             return true;
@@ -92,7 +98,7 @@ bool isSafe(int row, int col, int num) {
 bool isComplete()
 {
     for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
+        for (int j = 0; j < SIZE; j++) {
             if (board[i][j]==0)
                 return false;
         }
@@ -100,6 +106,70 @@ bool isComplete()
     return true;
 }
 
+bool findEmptyLocation(int &row, int &col)
+{
+    for (row = 0; row < SIZE; row++) {
+        for (col = 0; col < SIZE; col++) {
+            if (board[row][col] == 0)
+                return true;
+        }
+    }
+    return false;
+}
+
+bool solveSudoku()
+{
+    int row, col;
+    if(!findEmptyLocation(row, col))
+        return true;
+
+    for(int num = 1; num <= 9; num++) {
+        if(isSafe(row, col, num))
+        {
+            board[row][col] = num;
+            if (solveSudoku())
+                return true;
+            board[row][col] = 0;
+        }
+    }
+    return false;
+}
+
+void giveHint() 
+{
+    int temp[SIZE][SIZE];
+    for(int i = 0; i < SIZE; i++) {
+        for(int j = 0; j < SIZE; j++) {
+            temp[i][j] = board[i][j];
+        }
+    }
+    if (!solveSudoku())
+    {
+        cout << "\nNo solution exists.\n";
+        return;
+    }
+    for(int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE;  j++) {
+            if (temp[i][j] == 0) 
+            {
+                cout << "\nHint\n";
+                cout << "Row " << i + 1 << ", Column " << j + 1 << " = " << board[i][j] << endl;
+                for(int r = 0; r < SIZE; r++) {
+                    for (int c = 0; c < SIZE; c++) {
+                        board[r][c] = temp[r][c];
+                    }
+                }
+                return;
+            }
+        }
+    }
+    cout << "\nBoard already complete!\n";
+    for (int r = 0; r < SIZE; r++) {
+        for (int c = 0; c < SIZE; c++) {
+            board[r][c] = temp[r][c];
+        }
+    }
+}
 
 void makeMove() {
     int row, col, num;
@@ -110,7 +180,8 @@ void makeMove() {
     cout << "Column (1-9): ";
     cin >> col;
 
-    cout << num;
+    cout << "Number (1-9): ";
+    cin >> num;
 
     row--;
     col--;
@@ -126,7 +197,7 @@ void makeMove() {
         return;
     }
 
-    if (orginal[row][col] != 0) {
+    if (original[row][col] != 0) {
         cout << "\nThis cell cannot be changed!\n";
         return ;
     }
@@ -134,7 +205,6 @@ void makeMove() {
     if (isSafe(row,col,num))
     {
         board[row][col] = num;
-
         cout << "\nMove successful!\n";
     }
     else {
@@ -146,21 +216,21 @@ void menu()
 {
     cout << "\n----------------- SUDOKU ----------------\n";
     cout << "1. Display Board\n";
-    cout <<"2. Make Move\n";
+    cout << "2. Make Move\n";
     cout << "3. Solve Puzzle\n";
-    cout << "4. Exit\n";
+    cout << "4. Give Hint\n";
+    cout << "5. Restart Game\n";
+    cout << "6. Exit\n";
 }
 
 int main () 
 {
     copyOriginal();
-
     int choice;
 
     while(true)
     {
         menu();
-
         cout <<"\nEnter choice: ";
         cin >> choice;
 
@@ -173,7 +243,6 @@ int main ()
             case 2:
                 printBoard();
                 makeMove();
-
                 if (isComplete())
                 {
                     printBoard();
@@ -183,10 +252,26 @@ int main ()
                 break;
 
             case 3:
-                cout << "\nSolver will be implemented later\n";
+                cout << "Solving puzzle\n";
+                if (solveSudoku())
+                {
+                    printBoard();
+                    cout << "\nPuzzle solved successfully!\n";
+                }
+                else {
+                    cout << "\nNo solution exists.\n";
+                }
                 break;
 
             case 4:
+                giveHint();
+                break;
+
+            case 5:
+                restartGame();
+                break;
+
+            case 6:
                 cout << "\nThank You for playing!\n";
                 return 0;
 
